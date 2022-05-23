@@ -25,9 +25,16 @@
               rise: value.change === 'RISE',
               fall: value.change === 'FALL',
             }"
-            >{{ value.trade_price | comma }}</span
+            >{{ value.trade_price | comma }}
+            <sup
+              >(<span v-if="value.change === 'RISE'">+</span
+              ><span v-else-if="value.change === 'FALL'">-</span
+              >{{ value.change_price | comma }})</sup
+            ></span
           >
-          <span class="start">시작가 : {{ value.opening_price | comma }}</span>
+          <span class="start"
+            >시작가 : {{ value.prev_closing_price | comma }}</span
+          >
           <span class="average"
             >52주 : {{ value.highest_52_week_price | comma }} /
             {{ value.lowest_52_week_price | comma }}</span
@@ -69,7 +76,7 @@ export default {
     onOpen() {
       this.requestList = [
         {
-          ticket: "TEST",
+          ticket: "UNIQUE_TICKET",
         },
         {
           type: "ticker",
@@ -245,6 +252,9 @@ li > div:last-of-type {
   font-weight: bold;
   text-align: right;
   color: green;
+}
+.price sup {
+  font-size: 12px;
 }
 .price.rise {
   color: red;
