@@ -49,6 +49,9 @@ export default {
       this.nickname = "";
     },
   },
+  mounted() {
+    console.log(this.$store.getters.getCoinList);
+  },
 };
 </script>
 

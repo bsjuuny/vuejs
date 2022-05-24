@@ -1,6 +1,7 @@
 <template>
   <div>
-    <h1>Coin Home(UPBIT API)</h1>
+    <h1>Coin <sub>(UPBIT API)</sub></h1>
+    <button @click="$router.push('/login')">Click to Navigate</button>
     <ul>
       <li v-for="(value, key, index) in responseData" :key="index">
         <div>
@@ -46,14 +47,10 @@
 </template>
 
 <script>
-import axios from "axios";
-
 export default {
   name: "Coin",
   data() {
     return {
-      websocket: null,
-      socket: null,
       requestCoinList: [
         "KRW-BTC",
         "KRW-ETH",
@@ -67,14 +64,11 @@ export default {
         "KRW-XLM",
       ],
       responseData: [],
-      message: null,
-      requestList: [],
-      pear: [],
     };
   },
   methods: {
     onOpen() {
-      this.requestList = [
+      let requestList = [
         {
           ticket: "UNIQUE_TICKET",
         },
@@ -83,97 +77,45 @@ export default {
           codes: this.requestCoinList,
         },
       ];
-      const requestMessage = JSON.stringify(this.requestList);
+      const requestMessage = JSON.stringify(requestList);
       this.doSend(requestMessage);
       this.heartbeat();
     },
-    onClose: function (evt) {
-      alert("연결이 종료되었습니다.");
-      console.error(evt);
-    },
     onMessage(evt) {
-      var enc = new TextDecoder("utf-8");
-      var arr = new Uint8Array(evt.data);
-      let forObject = new Object();
-
-      let textArray = new Array(enc.decode(arr));
-      textArray = textArray.toString().replace(/\{|\}|"/gi, "");
-      textArray = textArray.split(",");
-
-      textArray.forEach((element) => {
-        let forSplit = element.split(":");
-        forObject[forSplit[0]] = forSplit[1];
-
-        if (forSplit[0] === "code" && this.pear[forSplit[1]]) {
-          forObject["pear"] = this.pear[forSplit[1]].stage;
-          forObject["koreanName"] = this.pear[forSplit[1]].korean_name;
-        }
-      });
-      this.responseData[forObject.code] = forObject;
-
-      //this.websocket.close();
-    },
-    onError(evt) {
-      console.error(evt);
+      this.$store.commit("changeCoinInformation", evt);
     },
     doSend(message) {
-      console.log("발신: " + message);
-      this.websocket.send(message);
+      this.$store.dispatch("sendMessage", message);
     },
     heartbeat() {
-      if (!this.websocket) return;
-      if (this.websocket.readyState !== 1) return;
-      console.log("heartbeat");
-      this.websocket.send("heartbeat");
+      if (!this.$socket) return;
+      if (this.$socket.readyState !== 1) return;
+      this.$store.dispatch("sendMessage", "heartbeat");
       let intervalTime = 1000 * 100;
       setTimeout(this.heartbeat, intervalTime);
-    },
-    pollPear() {
-      axios.get("https://datavalue.dunamu.com/api/fearindex").then((res) => {
-        let pairs = res.data.pairs;
-        pairs.forEach((element) => {
-          element.code = element.code.split(".")[1];
-
-          this.requestCoinList.filter((x) => {
-            if (x === element.code) {
-              this.pear[element.code] = element;
-            }
-          });
-        });
-      });
     },
   },
   created() {
     const that = this;
-    const wsUri = "wss://api.upbit.com/websocket/v1";
-    that.websocket = new WebSocket(wsUri);
-    that.websocket.binaryType = "arraybuffer";
-
-    that.websocket.onopen = function (evt) {
-      that.onOpen(evt);
-    };
-    that.websocket.onclose = function (evt) {
-      that.onClose(evt);
-    };
-    that.websocket.onmessage = function (evt) {
-      that.onMessage(evt);
-    };
-    that.websocket.onerror = function (evt) {
-      that.onError(evt);
-    };
 
     let createObject = new Object();
     that.requestCoinList.forEach((element) => {
       createObject[element] = {};
     });
-    that.responseData = createObject;
+    this.$store.commit("createCoinList", createObject);
+
+    this.$store.dispatch("pollPear");
+
+    that.$socket.binaryType = "arraybuffer";
+    that.$socket.onopen = function (evt) {
+      that.onOpen(evt);
+    };
+    this.$socket.onmessage = function (evt) {
+      that.onMessage(evt);
+    };
   },
   mounted() {
-    let time = 1000 * 60 * 10;
-    this.pollPear();
-    setInterval(function () {
-      this.pollPear();
-    }, time);
+    this.responseData = this.$store.getters.getCoinList;
   },
   filters: {
     comma(value) {
@@ -186,13 +128,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-* {
-  margin: 0;
-  padding: 0;
-}
 h1 {
   margin: 30px 0 0;
+  font-size: 24px;
+  font-weight: bold;
   text-align: center;
+  sub {
+    font-size: 14px;
+    color: #999;
+  }
 }
 ul {
   display: flex;
@@ -206,7 +150,6 @@ li {
   width: 320px;
   margin: 10px auto 0;
   padding: 15px;
-  list-style: none;
   border: 1px solid #ccc;
   border-radius: 10px;
   box-sizing: border-box;
@@ -223,27 +166,34 @@ li > div:last-of-type {
 }
 .koreanName {
   display: block;
+  margin: 3px 0 0;
   font-size: 14px;
 }
 .indices {
-  display: block;
-  font-size: 16px;
+  display: inline-block;
+  margin: 3px 0 0;
+  padding: 1px 3px 2px;
+  font-size: 11px;
   font-weight: bold;
+  border-radius: 5px;
 }
 .indices.veryFear {
-  color: blue;
+  background-color: blue;
+  color: #fff;
 }
 .indices.fear {
-  color: skyblue;
+  background-color: skyblue;
 }
 .indices.neutrality {
-  color: green;
+  background-color: green;
+  color: #fff;
 }
 .indices.avarice {
-  color: orange;
+  background-color: orange;
 }
 .indices.veryAvarice {
-  color: red;
+  background-color: red;
+  color: #fff;
 }
 .price {
   display: block;

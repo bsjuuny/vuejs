@@ -23,4 +23,16 @@ module.exports = defineConfig({
       },
     },
   },
+  css: {
+    loaderOptions: {
+      sass: {
+        // sassOptions: {
+        //   includePaths: [path.resolve(__dirname, "src/core/")],
+        //   indentedSyntax: true,
+        // },
+        additionalData: '@import "~@/assets/css/style.scss";',
+      },
+    },
+  },
+  assetsDir: "@/assets/",
 });
