@@ -1,7 +1,6 @@
 <template>
   <div>
     <h1>Coin <sub>(UPBIT API)</sub></h1>
-    <button @click="$router.push('/login')">Click to Navigate</button>
     <ul>
       <li v-for="(value, key, index) in responseData" :key="index">
         <div>
@@ -61,7 +60,7 @@ export default {
         "KRW-DOGE",
         "KRW-MLK",
         "KRW-OMG",
-        "KRW-XLM",
+        "KRW-PLA",
       ],
       responseData: [],
     };
@@ -172,10 +171,12 @@ li > div:last-of-type {
 .indices {
   display: inline-block;
   margin: 3px 0 0;
-  padding: 1px 3px 2px;
-  font-size: 11px;
+  padding: 1px 3px 0;
+  font-size: 12px;
   font-weight: bold;
   border-radius: 5px;
+  line-height: 17px;
+  vertical-align: middle;
 }
 .indices.veryFear {
   background-color: blue;

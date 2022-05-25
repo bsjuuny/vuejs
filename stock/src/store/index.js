@@ -39,7 +39,6 @@ export default new Vuex.Store({
       state.socket.isConnected = true;
     },
     SOCKET_ONCLOSE(state, event) {
-      alert("연결이 종료되었습니다.");
       state.socket.isConnected = false;
       console.log(event);
     },
