@@ -9,20 +9,24 @@ const routes = [
     redirect: "/coin",
   },
   {
-    path: "/home/",
+    path: "/home",
     component: () => import("@/views/Home/Home"),
   },
   {
-    path: "/login/",
+    path: "/login",
     component: () => import("@/views/Login/Login"),
   },
   {
-    path: "/signup/",
+    path: "/signup",
     component: () => import("@/views/Signup/Signup"),
   },
   {
-    path: "/coin/",
+    path: "/coin",
     component: () => import("@/views/Coin/Coin"),
+  },
+  {
+    path: "/chart",
+    component: () => import("@/views/Chart/Chart"),
   },
 ];
 
