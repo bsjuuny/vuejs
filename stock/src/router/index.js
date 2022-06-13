@@ -28,6 +28,10 @@ const routes = [
     path: "/chart",
     component: () => import("@/views/Chart/Chart"),
   },
+  {
+    path: "/dating",
+    component: () => import("@/views/Dating/Dating"),
+  },
 ];
 
 const router = new VueRouter({
