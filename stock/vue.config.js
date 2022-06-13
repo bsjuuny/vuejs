@@ -20,7 +20,7 @@ module.exports = defineConfig({
         //   includePaths: [path.resolve(__dirname, "src/core/")],
         //   indentedSyntax: true,
         // },
-        additionalData: '@import "~@/assets/css/style.scss";',
+        // additionalData: '@import "@/assets/css/style.scss";',
       },
     },
   },

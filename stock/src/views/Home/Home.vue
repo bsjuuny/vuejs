@@ -4,7 +4,7 @@
 
     <VueTradingView
       :options="{
-        symbol: 'KRX:020150',
+        symbol: 'KRX:005930',
         theme: 'light',
         width: '100%',
         height: '500',

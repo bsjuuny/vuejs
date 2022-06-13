@@ -58,9 +58,10 @@ export default {
         "KRW-ADA",
         "KRW-STEEM",
         "KRW-DOGE",
-        "KRW-MLK",
         "KRW-OMG",
-        "KRW-PLA",
+        "KRW-BORA",
+        "KRW-MLK",
+        "KRW-REP",
       ],
       responseData: [],
     };
@@ -126,7 +127,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 h1 {
   margin: 30px 0 0;
   font-size: 24px;
