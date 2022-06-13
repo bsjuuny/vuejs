@@ -4,6 +4,7 @@ import router from "./router";
 import store from "./store";
 import VueNativeSock from "vue-native-websocket";
 import VueGeolocationApi from "vue-geolocation-api";
+import LoadScript from "vue-plugin-load-script";
 
 const wsUri = "wss://api.upbit.com/websocket/v1";
 Vue.use(VueNativeSock, wsUri, {
@@ -26,5 +27,6 @@ Vue.config.productionTip = false;
 new Vue({
   router,
   store,
+  LoadScript,
   render: (h) => h(App),
 }).$mount("#app");
