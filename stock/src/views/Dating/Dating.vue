@@ -26,7 +26,13 @@
           v-on:keydown.enter="getSearch"
         />
         <button type="button" v-on:click="getSearch">검색</button>
-        <button type="button" v-on:click="getRoute">선택된 경로 검색</button>
+        <button
+          type="button"
+          v-on:click="getRoute"
+          v-if="selectedLatLng.length > 2"
+        >
+          선택된 경로 검색
+        </button>
       </div>
 
       <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
@@ -258,7 +264,6 @@ export default {
       keys.map((value) => {
         this.getSavedLocation = this.$localStorage.get(value);
       });
-      // console.log(keys);
       //this.getSavedLocation = ;
     },
     clearLocalStorage() {
@@ -272,36 +277,55 @@ export default {
         this.$delete(this.selectedLatLng, getClickIndex);
       } else {
         this.activeIndex.push(index);
-        this.selectedLatLng.push({ lat: data.x, lng: data.y });
+        this.selectedLatLng.push({ lat: data.y, lng: data.x });
       }
     },
     getRoute() {
-      let response = axios.get(
-        "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
-        {
-          params: {
-            appKey: process.env.VUE_APP_TMAP_KEY,
-            startX: setCoords[0].lng,
-            startY: setCoords[0].lat,
-            passList: waypoints,
-            endX: setCoords[setCoords.length - 1].lng,
-            endY: setCoords[setCoords.length - 1].lat,
-            reqCoordType: "WGS84GEO",
-            resCoordType: "EPSG3857",
-            startName: "홍대입구역 8번출구",
-            endName: "상수역 1번출구",
-          },
-          headers: {
-            Authorization: KAKAO_KEY,
-          },
+      let waypoints = "";
+      this.selectedLatLng.forEach((value, index) => {
+        if (index === 0 || index === this.selectedLatLng.length - 1) {
+          return false;
+        } else {
+          waypoints += value.lng + "," + value.lat;
+
+          if (index !== this.selectedLatLng.length - 2) {
+            waypoints += "_";
+          }
         }
-      );
-      console.log(response);
+      });
+      axios({
+        url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
+        method: "post",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          appKey: process.env.VUE_APP_TMAP_KEY,
+        },
+        data: JSON.stringify({
+          startX: this.selectedLatLng[0].lng,
+          startY: this.selectedLatLng[0].lat,
+          passList: waypoints,
+          endX: this.selectedLatLng[this.selectedLatLng.length - 1].lng,
+          endY: this.selectedLatLng[this.selectedLatLng.length - 1].lat,
+          reqCoordType: "WGS84GEO",
+          resCoordType: "EPSG3857",
+          startName: "홍대입구역 8번출구",
+          endName: "상수역 1번출구",
+        }),
+      })
+        .then(function (response) {
+          console.log(response);
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
     },
   },
   created() {},
   mounted() {
-    this.getMyInfo();
+    this.$geolocation.getCurrentPosition().then(() => {
+      this.getMyInfo();
+    });
   },
   updated() {},
 };
