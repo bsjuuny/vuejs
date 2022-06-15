@@ -16,11 +16,6 @@ export default new Vuex.Store({
     },
     coinList: [],
     pear: [],
-    datingSearch: {
-      result: [],
-      isLoading: false,
-      meta: [],
-    },
   },
   // watch
   getters: {
@@ -110,11 +105,6 @@ export default new Vuex.Store({
           // alert(err);
           // return Promise.reject(err);
         });
-    },
-    datingSearchResult(state, response, isloading) {
-      state.datingSearch.result = response.data.documents;
-      state.datingSearch.isLoading = isloading;
-      state.datingSearch.meta = response.data.meta;
     },
   },
   actions: {
