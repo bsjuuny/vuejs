@@ -79,7 +79,7 @@ import dayjs from "dayjs";
 import * as htmlToImage from "html-to-image";
 // eslint-disable-next-line no-unused-vars
 import { saveAs } from "file-saver";
-import * as download from "downloadjs";
+// import * as download from "downloadjs";
 
 var setMap = null;
 /* eslint-disable no-undef */
@@ -492,12 +492,20 @@ export default {
     },
     print() {
       htmlToImage
-        .toPng(document.getElementById("map_div"))
-        .then(function (dataUrl) {
+        .toBlob(document.getElementById("map_div"))
+        .then(function (blob) {
           let getDate = dayjs().format("YYYYMMDDHHmm");
-          download(dataUrl, getDate + ".png");
+          // let img = new Image();
+          // img.src = dataUrl;
+          // document.body.appendChild(img);
+          // download(dataUrl, getDate + ".png");
           // console.log(dataUrl);
           // this.output = dataUrl;
+          if (window.saveAs) {
+            window.saveAs(blob, getDate + ".png");
+          } else {
+            FileSaver.saveAs(blob, getDate + ".png");
+          }
         });
     },
   },
