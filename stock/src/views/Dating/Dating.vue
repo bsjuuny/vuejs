@@ -5,66 +5,70 @@
     <span v-else-if="!$geolocation.supported"
       >Geolocation API is not supported</span
     >
-    <span>{{ $geolocation.coords }}</span>
+    <span v-else>{{ $geolocation.coords }}</span>
 
-    <div id="map_div"></div>
-    <div>
-      <div>
-        <button type="button" v-on:click.prevent="setLocalStorage">
-          현재 위치 저장
-        </button>
-        <button type="button" v-on:click.prevent="clearLocalStorage">
-          초기화
-        </button>
-      </div>
-      <div>
-        <input
-          type="text"
-          v-model.trim="searchText"
-          name="search"
-          placeholder="검색어를 입력하세요"
-          v-on:keydown.enter="getSearch"
-        />
-        <button type="button" v-on:click="getSearch">검색</button>
-        <button
-          type="button"
-          v-on:click="getRoute"
-          v-if="selectedLatLng.length > 2"
-        >
-          선택된 경로 검색
-        </button>
-      </div>
-
-      <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
-      <ul v-else>
-        <li
-          v-for="(search, index) in responseData.result"
-          v-bind:key="index"
-          :class="{ active: activeIndex.includes(index) }"
-        >
-          {{ index + 1 }}
-
-          <a v-bind:href="search.place_url" target="_blank">
-            {{ search.place_name }}
-            <span>
-              <sub>
-                {{ search.category_name_detail }} /
-                {{ search.road_address_name }}
-              </sub>
-            </span>
-          </a>
-          <!-- v-bind:data-x="search.x"
-            v-bind:data-y="search.y" -->
-          <button type="button" style="" @click="setActive(search, index)">
-            선택
+    <div class="contents">
+      <div id="map_div" ref="printMe"></div>
+      <div class="customArea">
+        <div>
+          <button type="button" v-on:click.prevent="setLocalStorage">
+            현재 위치 저장
           </button>
-        </li>
-      </ul>
-      <ul>
-        <li v-for="(value, index) in getSavedLocation" v-bind:key="value">
-          {{ value.location.lat }} : {{ value.location.lng }} / {{ index }}
-        </li>
-      </ul>
+          <button type="button" v-on:click.prevent="clearLocalStorage">
+            초기화
+          </button>
+        </div>
+        <div>
+          <input
+            type="text"
+            v-model.trim="searchText"
+            name="search"
+            placeholder="검색어를 입력하세요"
+            v-on:keydown.enter="getSearch"
+          />
+          <button type="button" v-on:click="getSearch">검색</button>
+          <button
+            type="button"
+            v-on:click="getRoute"
+            v-if="selectedLatLng.length > 2"
+          >
+            선택된 경로 검색
+          </button>
+          <button type="button" v-on:click="print">이미지로</button>
+        </div>
+
+        <p class="routeTotalInformation">{{ routeInformation }}</p>
+        <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
+        <ul v-else>
+          <li
+            v-for="(search, index) in responseData.result"
+            v-bind:key="index"
+            :class="{ active: activeIndex.includes(index) }"
+          >
+            {{ index + 1 }}
+
+            <a v-bind:href="search.place_url" target="_blank">
+              {{ search.place_name }}
+              <span>
+                <sub>
+                  {{ search.category_name_detail }} /
+                  {{ search.road_address_name }}
+                </sub>
+              </span>
+            </a>
+            <!-- v-bind:data-x="search.x"
+            v-bind:data-y="search.y" -->
+            <button type="button" style="" @click="setActive(search, index)">
+              선택
+            </button>
+          </li>
+        </ul>
+        <ul>
+          <li v-for="(value, index) in getSavedLocation" v-bind:key="value">
+            {{ value.location.lat }} : {{ value.location.lng }} / {{ index }}
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -72,6 +76,10 @@
 <script>
 import axios from "axios";
 import dayjs from "dayjs";
+import * as htmlToImage from "html-to-image";
+// eslint-disable-next-line no-unused-vars
+import { saveAs } from "file-saver";
+import * as download from "downloadjs";
 
 var setMap = null;
 /* eslint-disable no-undef */
@@ -92,6 +100,11 @@ export default {
         meta: [],
       },
       selectedLatLng: [],
+      routeInformation: "",
+      drawInfoArr: [],
+      resultdrawArr: [],
+      routeMaker: [],
+      output: null,
     };
   },
   methods: {
@@ -105,15 +118,13 @@ export default {
 
       setMap = new Tmapv2.Map("map_div", {
         center: this.currentCoords[0],
-        width: "100%",
-        height: "500px",
         zoom: 16,
         httpsMode: true,
       });
       this.addMarkerAni(Tmapv2.MarkerOptions.ANIMATE_FLICKER);
     },
     addMarkerAni(aniType) {
-      this.removeMarkers();
+      this.removeMarkers(this.defaultMarkers);
 
       var marker = new Tmapv2.Marker({
         position: this.currentCoords[0],
@@ -126,12 +137,12 @@ export default {
       });
       this.defaultMarkers.push(marker);
     },
-    removeMarkers() {
-      if (!this.defaultMarkers || this.defaultMarkers <= 0) return false;
-      for (var i = 0; i < this.defaultMarkers.length; i++) {
-        this.defaultMarkers[i].setMap(null);
+    removeMarkers(makers) {
+      if (!makers || makers.length <= 0) return false;
+      for (var i = 0; i < makers.length; i++) {
+        makers[i].setMap(null);
       }
-      this.defaultMarkers = [];
+      makers = [];
     },
     async getSearch() {
       const KAKAO_KEY = process.env.VUE_APP_KAKAO_KEY;
@@ -139,12 +150,12 @@ export default {
       const search_size = 15;
       let search_page = 1;
       const search = this.searchText;
+      let self = this;
 
       try {
         if (search !== "") {
-          let response = await axios.get(
-            "https://dapi.kakao.com/v2/local/search/keyword.json",
-            {
+          await axios
+            .get("https://dapi.kakao.com/v2/local/search/keyword.json", {
               params: {
                 query: search,
                 radius: search_radius,
@@ -156,40 +167,54 @@ export default {
               headers: {
                 Authorization: KAKAO_KEY,
               },
-            }
-          );
-
-          let getCoords = [];
-          if (response.data.meta.total_count > 0) {
-            response.data.documents.map((value, index) => {
-              let getData = value["category_name"].split(">");
-              value["category_name_detail"] =
-                getData[getData.length - 1].trim();
-              getCoords[index] = {
-                lat: value["y"],
-                lng: value["x"],
-                title: value["place_name"],
-                index: index + 1,
-                url: value["place_url"],
-              };
+            })
+            .then(function (response) {
+              let getCoords = [];
+              self.removeLine();
+              if (response.data.meta.total_count > 0) {
+                self.activeIndex = [];
+                self.selectedLatLng = [
+                  {
+                    lat: self.$geolocation.coords.latitude,
+                    lng: self.$geolocation.coords.longitude,
+                    title: "현 위치",
+                    index: 1,
+                    url: "",
+                  },
+                ];
+                response.data.documents.map((value, index) => {
+                  let getData = value["category_name"].split(">");
+                  value["category_name_detail"] =
+                    getData[getData.length - 1].trim();
+                  getCoords[index] = {
+                    lat: value["y"],
+                    lng: value["x"],
+                    title: value["place_name"],
+                    index: index + 1,
+                    url: value["place_url"],
+                  };
+                });
+                self.addSearchMaker(getCoords, "pin");
+                self.responseData.meta = response.data.meta;
+                self.responseData.result = response.data.documents;
+                self.responseData.isLoading = false;
+              } else {
+                self.removeMarkers(self.searchMarkers);
+              }
+            })
+            .catch(function (error) {
+              console.log(error);
             });
-            this.addSearchMaker(getCoords);
-            this.responseData.meta = response.data.meta;
-            this.responseData.result = response.data.documents;
-            this.responseData.isLoading = false;
-          } else {
-            this.removeAddedMarkers();
-          }
         }
       } catch (error) {
         console.log(error);
       }
     },
-    addSearchMaker(getCoords) {
+    addSearchMaker(getCoords, status) {
       var coords1 = getCoords;
       var coordIdx1 = 0;
 
-      this.removeAddedMarkers();
+      this.removeMarkers(this.searchMarkers);
 
       if (coords1.length <= 0) return;
 
@@ -212,6 +237,10 @@ export default {
             coords1[coordIdx1].title +
             "</span></a>", //Marker의 라벨.
           title: coords1[coordIdx1].index + " " + coords1[coordIdx1].title, //Marker 타이틀.
+          visible:
+            (status === "route" && coordIdx1 > 0) || status !== "route"
+              ? true
+              : false,
           map: setMap, //Marker가 표시될 Map 설정.
         });
 
@@ -229,12 +258,6 @@ export default {
       };
       setTimeout(func, 400);
       this.searchMarkers = getList;
-    },
-    removeAddedMarkers() {
-      for (var i = 0; i < this.searchMarkers.length; i++) {
-        this.searchMarkers[i].setMap(null);
-      }
-      this.searchMarkers = [];
     },
     setLocalStorage() {
       let getStorage = [];
@@ -275,13 +298,29 @@ export default {
       if (getClickIndex >= 0) {
         this.$delete(this.activeIndex, getClickIndex);
         this.$delete(this.selectedLatLng, getClickIndex);
+        this.selectedLatLng.map((value, index) => {
+          value.index = index + 1;
+        });
       } else {
-        this.activeIndex.push(index);
-        this.selectedLatLng.push({ lat: data.y, lng: data.x });
+        if (this.selectedLatLng.length <= 4) {
+          this.activeIndex.push(index);
+          this.selectedLatLng.push({
+            lat: data.y,
+            lng: data.x,
+            title: data.place_name,
+            index: this.selectedLatLng.length + 1,
+            url: data.place_url,
+          });
+        } else {
+          alert("최대 5곳 까지만 가능 합니다.");
+        }
       }
     },
     getRoute() {
       let waypoints = "";
+      //기존 그려진 라인 & 마커가 있다면 초기화
+      this.removeLine();
+
       this.selectedLatLng.forEach((value, index) => {
         if (index === 0 || index === this.selectedLatLng.length - 1) {
           return false;
@@ -293,6 +332,7 @@ export default {
           }
         }
       });
+      var self = this;
       axios({
         url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
         method: "post",
@@ -309,15 +349,155 @@ export default {
           endY: this.selectedLatLng[this.selectedLatLng.length - 1].lat,
           reqCoordType: "WGS84GEO",
           resCoordType: "EPSG3857",
-          startName: "홍대입구역 8번출구",
-          endName: "상수역 1번출구",
+          startName: "Start",
+          endName: "End",
         }),
       })
         .then(function (response) {
-          console.log(response);
+          if (response.status === 200) {
+            if (self.searchMarkers.length > 0) {
+              self.removeMarkers(self.searchMarkers);
+            }
+            var resultData = response.data.features;
+
+            //결과 출력
+            var tDistance =
+              "총 거리 : " +
+              (resultData[0].properties.totalDistance / 1000).toFixed(1) +
+              "km,";
+            var tTime =
+              " 총 시간 : " +
+              (resultData[0].properties.totalTime / 60).toFixed(0) +
+              "분";
+
+            self.routeInformation = tDistance + tTime;
+
+            for (let i in resultData) {
+              //for문 [S]
+              var geometry = resultData[i].geometry;
+              var properties = resultData[i].properties;
+
+              if (geometry.type == "LineString") {
+                for (var j in geometry.coordinates) {
+                  // 경로들의 결과값(구간)들을 포인트 객체로 변환
+                  var latlng = new Tmapv2.Point(
+                    geometry.coordinates[j][0],
+                    geometry.coordinates[j][1]
+                  );
+                  // 포인트 객체를 받아 좌표값으로 변환
+                  let convertPoint =
+                    new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(latlng);
+                  // 포인트객체의 정보로 좌표값 변환 객체로 저장
+                  var convertChange = new Tmapv2.LatLng(
+                    convertPoint._lat,
+                    convertPoint._lng
+                  );
+                  // 배열에 담기
+                  self.drawInfoArr.push(convertChange);
+                }
+              } else {
+                let markerImg = "";
+                let pType = "";
+                let size;
+                let description = "";
+
+                if (properties.pointType == "SP") {
+                  //출발지 마커
+                  markerImg =
+                    "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_s.png";
+                  pType = "S";
+                  size = new Tmapv2.Size(24, 38);
+                  description = self.selectedLatLng[0].place_name;
+                }
+                // else if (properties.pointType == "EP") {
+                //   //도착지 마커
+                //   markerImg =
+                //     "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_e.png";
+                //   pType = "E";
+                //   size = new Tmapv2.Size(24, 38);
+                //   description =
+                //     self.selectedLatLng[self.selectedLatLng.length - 1]
+                //       .place_name;
+                // }
+                else {
+                  //각 포인트 마커
+                  markerImg = "https://topopen.tmap.co.kr/imgs/point.png";
+                  pType = "P";
+                  size = new Tmapv2.Size(12, 12);
+                  description = properties.description;
+                }
+
+                // 경로들의 결과값들을 포인트 객체로 변환
+                var latlon = new Tmapv2.Point(
+                  geometry.coordinates[0],
+                  geometry.coordinates[1]
+                );
+
+                // 포인트 객체를 받아 좌표값으로 다시 변환
+                let convertPoint =
+                  new Tmapv2.Projection.convertEPSG3857ToWGS84GEO(latlon);
+
+                var routeInfoObj = {
+                  markerImage: markerImg,
+                  lng: convertPoint._lng,
+                  lat: convertPoint._lat,
+                  pointType: pType,
+                };
+
+                // Marker 추가
+                // eslint-disable-next-line no-unused-vars
+                var marker_p = new Tmapv2.Marker({
+                  position: new Tmapv2.LatLng(
+                    routeInfoObj.lat,
+                    routeInfoObj.lng
+                  ),
+                  icon: routeInfoObj.markerImage,
+                  iconSize: size,
+                  title: description,
+                  map: setMap,
+                });
+                self.routeMaker.push(marker_p);
+              }
+            } //for문 [E]
+            self.drawLine(self.drawInfoArr);
+            self.addSearchMaker(self.selectedLatLng, "route");
+          }
         })
         .catch(function (error) {
           console.log(error);
+        });
+    },
+    drawLine(arrPoint) {
+      let polyline_;
+
+      polyline_ = new Tmapv2.Polyline({
+        path: arrPoint,
+        strokeColor: "#ff0000",
+        strokeWeight: 4,
+        map: setMap,
+      });
+      this.resultdrawArr.push(polyline_);
+    },
+    removeLine() {
+      if (this.routeMaker.length > 0) {
+        this.removeMarkers(this.routeMaker);
+      }
+      if (this.resultdrawArr.length > 0) {
+        for (let i in this.resultdrawArr) {
+          this.resultdrawArr[i].setMap(null);
+        }
+        this.resultdrawArr = [];
+      }
+      this.drawInfoArr = [];
+    },
+    print() {
+      htmlToImage
+        .toPng(document.getElementById("map_div"))
+        .then(function (dataUrl) {
+          let getDate = dayjs().format("YYYYMMDDHHmm");
+          download(dataUrl, getDate + ".png");
+          // console.log(dataUrl);
+          // this.output = dataUrl;
         });
     },
   },
@@ -325,6 +505,14 @@ export default {
   mounted() {
     this.$geolocation.getCurrentPosition().then(() => {
       this.getMyInfo();
+
+      this.selectedLatLng.push({
+        lat: this.$geolocation.coords.latitude,
+        lng: this.$geolocation.coords.longitude,
+        title: "현 위치",
+        index: 1,
+        url: "",
+      });
     });
   },
   updated() {},
@@ -359,8 +547,7 @@ input {
 }
 #map_div {
   display: block;
-  width: 100%;
-  height: 500px;
+  height: 60vh;
   margin: 10px 0 0;
 }
 #map_div + div {
@@ -395,5 +582,29 @@ ul li {
       color: red;
     }
   }
+}
+.routeTotalInformation {
+  margin: 10px 0;
+}
+.contents {
+  position: relative;
+  display: flex;
+  flex-flow: row nowrap;
+}
+.contents > div {
+  width: 40%;
+  background: rgba(255, 255, 255, 0.8);
+  &.customArea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 60vh;
+    padding: 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+}
+.contents > div:first-of-type {
+  width: 100%;
 }
 </style>
