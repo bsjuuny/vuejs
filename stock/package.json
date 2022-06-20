@@ -21,7 +21,6 @@
     "vue-geolocation-api": "^0.1.21",
     "vue-html2canvas": "^0.0.4",
     "vue-native-websocket": "^2.0.15",
-    "vue-plugin-load-script": "^2.1.1",
     "vue-router": "^3.5.1",
     "vue-web-storage": "^5.0.1",
     "vuex": "^3.6.2"

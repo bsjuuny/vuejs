@@ -1,11 +1,48 @@
 /* eslint-disable no-unused-vars */
 <template>
   <div>
-    <span v-if="$geolocation.loading">Loading location...</span>
-    <span v-else-if="!$geolocation.supported"
-      >Geolocation API is not supported</span
-    >
-    <span v-else>{{ $geolocation.coords }}</span>
+    <div class="geolocationPosition">
+      <span v-if="$geolocation.loading">Loading location...</span>
+      <span v-else-if="!$geolocation.supported"
+        >Geolocation API is not supported</span
+      >
+      <p v-else>
+        <span>latitude: {{ $geolocation.coords.latitude }}</span> /
+        <span>longitude: {{ $geolocation.coords.longitude }}</span> /
+        <span>
+          altitude:
+          {{
+            !$geolocation.coords.altitude ? "-" : $geolocation.coords.altitude
+          }}
+        </span>
+        /
+        <span>
+          accuracy:
+          {{
+            !$geolocation.coords.accuracy ? "-" : $geolocation.coords.accuracy
+          }}
+        </span>
+        /
+        <span>
+          altitudeAccuracy:
+          {{
+            !$geolocation.coords.altitudeAccuracy
+              ? "-"
+              : $geolocation.coords.altitudeAccuracy
+          }}
+        </span>
+        /
+        <span>
+          heading:
+          {{ !$geolocation.coords.heading ? "-" : $geolocation.coords.heading }}
+        </span>
+        /
+        <span>
+          speed:
+          {{ !$geolocation.coords.speed ? "-" : $geolocation.coords.speed }}
+        </span>
+      </p>
+    </div>
 
     <div class="contents">
       <div id="map_div" ref="printMe"></div>
@@ -27,6 +64,7 @@
             v-on:keydown.enter="getSearch"
           />
           <button type="button" v-on:click="getSearch">검색</button>
+          <button type="button" v-on:click="resetSearch">검색 초기화</button>
           <button
             type="button"
             v-on:click="getRoute"
@@ -41,21 +79,22 @@
         <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
         <ul v-else>
           <li
-            v-for="(search, index) in responseData.result"
+            v-for="(search, index) in searchResults"
             v-bind:key="index"
             :class="{ active: activeIndex.includes(index) }"
           >
-            {{ index + 1 }}
-
-            <a v-bind:href="search.place_url" target="_blank">
-              {{ search.place_name }}
-              <span>
-                <sub>
-                  {{ search.category_name_detail }} /
-                  {{ search.road_address_name }}
-                </sub>
-              </span>
-            </a>
+            <div>
+              <a v-bind:href="search.place_url" target="_blank">
+                {{ index + 1 }}
+                {{ search.place_name }}
+                <span>
+                  <sub>
+                    {{ search.category_name_detail }}
+                  </sub>
+                </span>
+              </a>
+              <address>{{ search.road_address_name }}</address>
+            </div>
             <!-- v-bind:data-x="search.x"
             v-bind:data-y="search.y" -->
             <button type="button" style="" @click="setActive(search, index)">
@@ -109,18 +148,20 @@ export default {
   },
   methods: {
     getMyInfo() {
-      this.currentCoords = [
-        new Tmapv2.LatLng(
-          this.$geolocation.coords.latitude,
-          this.$geolocation.coords.longitude
-        ),
-      ];
+      if (this.currentCoords.length <= 0) {
+        this.currentCoords = [
+          new Tmapv2.LatLng(
+            this.$geolocation.coords.latitude,
+            this.$geolocation.coords.longitude
+          ),
+        ];
 
-      setMap = new Tmapv2.Map("map_div", {
-        center: this.currentCoords[0],
-        zoom: 16,
-        httpsMode: true,
-      });
+        setMap = new Tmapv2.Map("map_div", {
+          center: this.currentCoords[0],
+          zoom: 16,
+          httpsMode: true,
+        });
+      }
       this.addMarkerAni(Tmapv2.MarkerOptions.ANIMATE_FLICKER);
     },
     addMarkerAni(aniType) {
@@ -151,6 +192,7 @@ export default {
       let search_page = 1;
       const search = this.searchText;
       let self = this;
+      this.activeIndex = [];
 
       try {
         if (search !== "") {
@@ -172,7 +214,6 @@ export default {
               let getCoords = [];
               self.removeLine();
               if (response.data.meta.total_count > 0) {
-                self.activeIndex = [];
                 self.selectedLatLng = [
                   {
                     lat: self.$geolocation.coords.latitude,
@@ -193,11 +234,14 @@ export default {
                     index: index + 1,
                     url: value["place_url"],
                   };
+                  self.searchResults.push(value);
                 });
                 self.addSearchMaker(getCoords, "pin");
                 self.responseData.meta = response.data.meta;
                 self.responseData.result = response.data.documents;
                 self.responseData.isLoading = false;
+
+                // let getResult = response.data.documents;
               } else {
                 self.removeMarkers(self.searchMarkers);
               }
@@ -259,6 +303,12 @@ export default {
       setTimeout(func, 400);
       this.searchMarkers = getList;
     },
+    resetSearch() {
+      this.searchResults = [];
+      this.activeIndex = [];
+      this.removeMarkers(this.searchMarkers);
+      this.removeLine();
+    },
     setLocalStorage() {
       let getStorage = [];
       let getDate = dayjs().format("YYYYMMDD");
@@ -312,7 +362,7 @@ export default {
             url: data.place_url,
           });
         } else {
-          alert("최대 5곳 까지만 가능 합니다.");
+          alert("최대 4곳 까지만 가능 합니다.");
         }
       }
     },
@@ -320,6 +370,8 @@ export default {
       let waypoints = "";
       //기존 그려진 라인 & 마커가 있다면 초기화
       this.removeLine();
+
+      // this.nearSort(this.selectedLatLng);
 
       this.selectedLatLng.forEach((value, index) => {
         if (index === 0 || index === this.selectedLatLng.length - 1) {
@@ -508,6 +560,67 @@ export default {
           }
         });
     },
+    // nearSort(array) {
+    //   let currentLat = this.$geolocation.coords.latitude;
+    //   let currentLng = this.$geolocation.coords.longitude;
+    //   let getCurrentNearArray = [];
+    //   array.map((value) => {
+    //     let currentDistance = this.getDistanceFromLatLonInKm(
+    //       currentLat,
+    //       currentLng,
+    //       value.lat,
+    //       value.lng
+    //     );
+    //     getCurrentNearArray.push(currentDistance);
+    //   });
+    //   for (let i = 0; i < getCurrentNearArray.length; i++) {
+    //     let swap;
+    //     for (let j = 0; j < getCurrentNearArray.length - 1 - i; j++) {
+    //       if (getCurrentNearArray[j] > getCurrentNearArray[j + 1]) {
+    //         swap = array[j];
+    //         array[j] = array[j + 1];
+    //         array[j + 1] = swap;
+    //       }
+    //     }
+    //     if (!swap) {
+    //       break;
+    //     }
+    //   }
+    //   array.map((value, index) => {
+    //     value.index = index + 1;
+    //   });
+    //   return array;
+    //   let distanceArray = [array.length - 1];
+    //   for (let i = 0; i < array.length; i++) {
+    //     distanceArray[i] = [array.length - 1];
+    //     for (let j = 0; j < array.length; j++) {
+    //       distanceArray[i][j] = this.getDistanceFromLatLonInKm(
+    //         array[i].lat,
+    //         array[i].lng,
+    //         array[j].lat,
+    //         array[j].lng
+    //       );
+    //     }
+    //   }
+    //   console.log(distanceArray);
+    // },
+    getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+      var R = 6371; // Radius of the earth in km
+      var dLat = this.deg2rad(lat2 - lat1); // deg2rad below
+      var dLon = this.deg2rad(lon2 - lon1);
+      var a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(this.deg2rad(lat1)) *
+          Math.cos(this.deg2rad(lat2)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      var d = R * c; // Distance in km
+      return d;
+    },
+    deg2rad(deg) {
+      return deg * (Math.PI / 180);
+    },
   },
   created() {},
   mounted() {
@@ -533,7 +646,7 @@ $a-tags-hover: "a:active, a:hover";
 $a-tags-visited: "a:visited";
 
 body {
-  padding: 20px 20px 50px;
+  padding: 0;
 }
 button {
   display: inline-block;
@@ -555,15 +668,17 @@ input {
 }
 #map_div {
   display: block;
-  height: 60vh;
-  margin: 10px 0 0;
+  height: 100vh;
+  margin: 0;
 }
 #map_div + div {
   margin: 10px 0 0;
 }
 ul li {
-  padding: 5px 0 0 20px;
-  font-size: 16px;
+  display: flex;
+  flex-flow: row wrap;
+  padding: 10px 0 0 0;
+  font-size: 14px;
   #{$a-tags} {
     color: #333;
     text-decoration: none;
@@ -574,14 +689,21 @@ ul li {
   sub {
     display: inline-block;
     margin: 0 0 0 10px;
-    font-size: 12px;
+    font-size: 10px;
     color: #999;
     vertical-align: 2px;
+  }
+  address {
+    display: block;
+    margin-top: 5px;
+    font-size: 10px;
+    color: #7e8795;
   }
   button {
     vertical-align: 2px;
   }
   &.active {
+    font-size: 14px;
     color: red;
     #{$a-tags} {
       color: red;
@@ -604,9 +726,9 @@ ul li {
   background: rgba(255, 255, 255, 0.8);
   &.customArea {
     position: absolute;
-    top: 0;
+    top: 68px;
     left: 0;
-    height: 60vh;
+    height: calc(90vh - 68px);
     padding: 20px;
     overflow-y: auto;
     box-sizing: border-box;
@@ -614,5 +736,23 @@ ul li {
 }
 .contents > div:first-of-type {
   width: 100%;
+}
+.geolocationPosition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 68px;
+  padding: 0 20px;
+  background: rgba($color: #999, $alpha: 0.7);
+  font-size: 14px;
+  line-height: 16px;
+  box-sizing: border-box;
+  z-index: 1;
+  overflow-y: auto;
+  span {
+    font-size: 14px;
+    line-height: 16px;
+  }
 }
 </style>
