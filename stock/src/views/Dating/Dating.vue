@@ -1,7 +1,10 @@
 /* eslint-disable no-unused-vars */
 <template>
   <div>
-    <div class="geolocationPosition">
+    <div
+      class="geolocationPosition"
+      v-bind:class="{ hidden: currentToggle === false }"
+    >
       <span v-if="$geolocation.loading">Loading location...</span>
       <span v-else-if="!$geolocation.supported"
         >Geolocation API is not supported</span
@@ -110,10 +113,10 @@
             {{ value.location.lat }} : {{ value.location.lng }} / {{ index }}
           </li>
         </ul>
-        <button type="button" class="showHide" v-on:click="toggle">
-          접기/펴기
-        </button>
       </div>
+      <button type="button" class="showHide" v-on:click="toggle">
+        접기/펴기
+      </button>
     </div>
   </div>
 </template>
@@ -353,8 +356,9 @@ export default {
     setActive(data, index) {
       let getClickIndex = this.activeIndex.indexOf(index);
       if (getClickIndex >= 0) {
+        console.log(this.selectedLatLng);
         this.$delete(this.activeIndex, getClickIndex);
-        this.$delete(this.selectedLatLng, getClickIndex);
+        this.$delete(this.selectedLatLng, getClickIndex + 1);
         this.selectedLatLng.map((value, index) => {
           value.index = index + 1;
         });
@@ -668,6 +672,7 @@ button {
 }
 input {
   display: inline-block;
+  width: calc(100% - 40px);
   margin: 10px 5px;
   padding: 5px 10px 3px;
   border: 1px solid #ccc;
@@ -730,6 +735,28 @@ ul li {
   position: relative;
   display: flex;
   flex-flow: row nowrap;
+  .showHide {
+    position: absolute;
+    top: 88px;
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    background: #fff
+      url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 1000 1000' enable-background='new 0 0 1000 1000' xml:space='preserve'%3E%3Cmetadata%3E Svg Vector Icons : http://www.onlinewebfonts.com/icon %3C/metadata%3E%3Cg%3E%3Cpath d='M500,12.9C229.4,12.9,10,231,10,500c0,269,219.4,487.1,490,487.1c270.6,0,490-218.1,490-487.1C990,231,770.6,12.9,500,12.9z M499.9,923.8c-233.8,0-423.3-189.5-423.3-423.3c0-233.8,189.5-423.3,423.3-423.3s423.3,189.5,423.3,423.3C923.2,734.3,733.7,923.8,499.9,923.8z'/%3E%3Cpath d='M245,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0-34.1-27.6-61.7-61.7-61.7C272.6,436,245,463.6,245,497.7L245,497.7L245,497.7z'/%3E%3Cpath d='M451.6,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C479.2,436,451.6,463.6,451.6,497.7L451.6,497.7L451.6,497.7z'/%3E%3Cpath d='M638.1,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C665.8,436,638.1,463.6,638.1,497.7L638.1,497.7z'/%3E%3C/g%3E%3C/svg%3E")
+      no-repeat 50% 50%;
+    background-size: 20px;
+    border-radius: 50%;
+    text-indent: -9999em;
+    border: 0;
+  }
+  .customArea.hidden + .showHide {
+    left: 0;
+  }
+  .customArea + .showHide {
+    left: 40vw;
+  }
 }
 .contents > div {
   width: 40%;
@@ -743,23 +770,6 @@ ul li {
     padding: 20px;
     box-sizing: border-box;
     overflow-y: auto;
-    .showHide {
-      position: absolute;
-      top: 0;
-      right: -20px;
-      display: block;
-      width: 20px;
-      height: 20px;
-      margin: 0;
-      padding: 0;
-      background: #fff
-        url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 1000 1000' enable-background='new 0 0 1000 1000' xml:space='preserve'%3E%3Cmetadata%3E Svg Vector Icons : http://www.onlinewebfonts.com/icon %3C/metadata%3E%3Cg%3E%3Cpath d='M500,12.9C229.4,12.9,10,231,10,500c0,269,219.4,487.1,490,487.1c270.6,0,490-218.1,490-487.1C990,231,770.6,12.9,500,12.9z M499.9,923.8c-233.8,0-423.3-189.5-423.3-423.3c0-233.8,189.5-423.3,423.3-423.3s423.3,189.5,423.3,423.3C923.2,734.3,733.7,923.8,499.9,923.8z'/%3E%3Cpath d='M245,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0-34.1-27.6-61.7-61.7-61.7C272.6,436,245,463.6,245,497.7L245,497.7L245,497.7z'/%3E%3Cpath d='M451.6,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C479.2,436,451.6,463.6,451.6,497.7L451.6,497.7L451.6,497.7z'/%3E%3Cpath d='M638.1,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C665.8,436,638.1,463.6,638.1,497.7L638.1,497.7z'/%3E%3C/g%3E%3C/svg%3E")
-        no-repeat 50% 50%;
-      background-size: 20px;
-      border-radius: 50%;
-      text-indent: -9999em;
-      border: 0;
-    }
     &.hidden {
       left: -40vw;
     }
@@ -781,6 +791,9 @@ ul li {
   box-sizing: border-box;
   z-index: 1;
   overflow-y: auto;
+  &.hidden {
+    top: -68px;
+  }
   span {
     font-size: 14px;
     line-height: 16px;
