@@ -742,6 +742,7 @@ ul li {
     height: calc(90vh - 68px);
     padding: 20px;
     box-sizing: border-box;
+    overflow-y: auto;
     .showHide {
       position: absolute;
       top: 0;
