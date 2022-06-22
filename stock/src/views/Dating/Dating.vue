@@ -684,6 +684,8 @@ input {
 #map_div {
   display: block;
   height: 100vh;
+  height: -webkit-fill-available;
+  height: fill-available;
   margin: 0;
 }
 #map_div + div {
@@ -766,7 +768,10 @@ ul li {
     top: 68px;
     left: 0;
     width: 40vw;
-    height: calc(90vh - 68px);
+    height: calc(
+      calc(calc(90vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom)) -
+        98px
+    );
     padding: 20px;
     box-sizing: border-box;
     overflow-y: auto;
