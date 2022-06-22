@@ -197,7 +197,7 @@ export default {
     },
     async getSearch() {
       const KAKAO_KEY = process.env.VUE_APP_KAKAO_KEY;
-      const search_radius = 350;
+      const search_radius = 1000;
       const search_size = 15;
       let search_page = 1;
       const search = this.searchText;
