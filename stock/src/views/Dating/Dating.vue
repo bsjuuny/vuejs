@@ -658,6 +658,10 @@ export default {
 $a-tags: "a, a:active, a:hover";
 $a-tags-hover: "a:active, a:hover";
 $a-tags-visited: "a:visited";
+$breakpoint-mobile: 320px;
+$breakpoint-tablet: 768px;
+$breakpoint-pc: 1024px;
+$retina: "(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)";
 
 body {
   padding: 0;
@@ -684,9 +688,11 @@ input {
 #map_div {
   display: block;
   height: 100vh;
-  height: -webkit-fill-available;
-  height: fill-available;
   margin: 0;
+  @media (max-width: $breakpoint-pc) and #{$retina} {
+    height: -webkit-fill-available;
+    height: fill-available;
+  }
 }
 #map_div + div {
   margin: 10px 0 0;
@@ -741,14 +747,14 @@ ul li {
     position: absolute;
     top: 88px;
     display: block;
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
     margin: 0;
     padding: 0;
     background: #fff
       url("data:image/svg+xml,%3Csvg version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 1000 1000' enable-background='new 0 0 1000 1000' xml:space='preserve'%3E%3Cmetadata%3E Svg Vector Icons : http://www.onlinewebfonts.com/icon %3C/metadata%3E%3Cg%3E%3Cpath d='M500,12.9C229.4,12.9,10,231,10,500c0,269,219.4,487.1,490,487.1c270.6,0,490-218.1,490-487.1C990,231,770.6,12.9,500,12.9z M499.9,923.8c-233.8,0-423.3-189.5-423.3-423.3c0-233.8,189.5-423.3,423.3-423.3s423.3,189.5,423.3,423.3C923.2,734.3,733.7,923.8,499.9,923.8z'/%3E%3Cpath d='M245,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0-34.1-27.6-61.7-61.7-61.7C272.6,436,245,463.6,245,497.7L245,497.7L245,497.7z'/%3E%3Cpath d='M451.6,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C479.2,436,451.6,463.6,451.6,497.7L451.6,497.7L451.6,497.7z'/%3E%3Cpath d='M638.1,497.7c0,34.1,27.6,61.7,61.7,61.7c34.1,0,61.7-27.6,61.7-61.7c0,0,0-0.1,0-0.1c0-34.1-27.6-61.7-61.7-61.7C665.8,436,638.1,463.6,638.1,497.7L638.1,497.7z'/%3E%3C/g%3E%3C/svg%3E")
       no-repeat 50% 50%;
-    background-size: 20px;
+    background-size: 30px;
     border-radius: 50%;
     text-indent: -9999em;
     border: 0;
@@ -757,7 +763,7 @@ ul li {
     left: 0;
   }
   .customArea + .showHide {
-    left: 40vw;
+    right: 20px;
   }
 }
 .contents > div {
@@ -767,7 +773,7 @@ ul li {
     position: absolute;
     top: 68px;
     left: 0;
-    width: 40vw;
+    width: 100vw;
     height: calc(
       calc(calc(90vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom)) -
         98px
@@ -776,7 +782,7 @@ ul li {
     box-sizing: border-box;
     overflow-y: auto;
     &.hidden {
-      left: -40vw;
+      left: -100vw;
     }
   }
 }
