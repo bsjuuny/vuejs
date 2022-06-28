@@ -60,6 +60,9 @@
           <button type="button" v-on:click.prevent="clearLocalStorage">
             초기화
           </button>
+          <button type="button" v-on:click.prevent="loadLocalStorage">
+            전체 불러오기
+          </button>
         </div>
         <div>
           <input
@@ -69,7 +72,7 @@
             placeholder="검색어를 입력하세요"
             v-on:keydown.enter="getSearch"
           />
-          <button type="button" v-on:click="getSearch">검색</button>
+          <button type="button" v-on:click="getSearch">주변 검색</button>
           <button type="button" v-on:click="resetSearch">검색 초기화</button>
           <button
             type="button"
@@ -78,7 +81,13 @@
           >
             선택된 경로 검색
           </button>
-          <button type="button" v-on:click="print">이미지로</button>
+          <button
+            type="button"
+            v-on:click="print"
+            v-if="this.responseData.result.length > 0"
+          >
+            이미지로
+          </button>
         </div>
 
         <p class="routeTotalInformation">{{ routeInformation }}</p>
@@ -107,9 +116,12 @@
               선택
             </button>
           </li>
+          <li v-if="this.responseData.meta.is_end === false">
+            <button type="button" v-on:click="getAddSearch">더보기</button>
+          </li>
         </ul>
         <ul>
-          <li v-for="(value, index) in getSavedLocation" v-bind:key="value">
+          <li v-for="(value, index) in getSavedLocation" v-bind:key="index">
             {{ value.location.lat }} : {{ value.location.lng }} / {{ index }}
           </li>
         </ul>
@@ -154,6 +166,9 @@ export default {
       routeMaker: [],
       output: null,
       currentToggle: false,
+      searchPage: 1,
+      searchPageSize: 15,
+      searchRadius: 1000,
     };
   },
   methods: {
@@ -173,6 +188,21 @@ export default {
         });
       }
       this.addMarkerAni(Tmapv2.MarkerOptions.ANIMATE_FLICKER);
+
+      // let getImg = document.querySelectorAll("img");
+      // getImg.forEach((item) => {
+      //   item.setAttribute({ crossorigin: "anonymous" });
+      // });
+      // document.querySelectorAll("img").each(function () {
+      //   var $img = this;
+      //   console.log($img)
+      //   $img.setAttribute({
+      //     crossorigin: "anonymous",
+      //   });
+      // });
+      // getImg.map((value, index) => {
+      //   console.log(index);
+      // });
     },
     addMarkerAni(aniType) {
       this.removeMarkers(this.defaultMarkers);
@@ -197,12 +227,12 @@ export default {
     },
     async getSearch() {
       const KAKAO_KEY = process.env.VUE_APP_KAKAO_KEY;
-      const search_radius = 1000;
-      const search_size = 15;
-      let search_page = 1;
+      const search_radius = this.searchRadius;
+      const search_size = this.searchPageSize;
+      let search_page = this.searchPage;
       const search = this.searchText;
       let self = this;
-      this.activeIndex = [];
+      // this.activeIndex = [];
 
       try {
         if (search !== "") {
@@ -224,15 +254,15 @@ export default {
               let getCoords = [];
               self.removeLine();
               if (response.data.meta.total_count > 0) {
-                self.selectedLatLng = [
-                  {
-                    lat: self.$geolocation.coords.latitude,
-                    lng: self.$geolocation.coords.longitude,
-                    title: "현 위치",
-                    index: 1,
-                    url: "",
-                  },
-                ];
+                // self.selectedLatLng = [
+                //   {
+                //     lat: self.$geolocation.coords.latitude,
+                //     lng: self.$geolocation.coords.longitude,
+                //     title: "현 위치",
+                //     index: 1,
+                //     url: "",
+                //   },
+                // ];
                 response.data.documents.map((value, index) => {
                   let getData = value["category_name"].split(">");
                   value["category_name_detail"] =
@@ -257,12 +287,16 @@ export default {
               }
             })
             .catch(function (error) {
-              console.log(error);
+              console.error(error);
             });
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
+    },
+    async getAddSearch() {
+      this.searchPage += 1;
+      this.getSearch();
     },
     addSearchMaker(getCoords, status) {
       var coords1 = getCoords;
@@ -316,6 +350,12 @@ export default {
     resetSearch() {
       this.searchResults = [];
       this.activeIndex = [];
+      this.searchPage = 1;
+      this.responseData = {
+        result: [],
+        isLoading: false,
+        meta: [],
+      };
       this.removeMarkers(this.searchMarkers);
       this.removeLine();
     },
@@ -342,21 +382,20 @@ export default {
         getStorage.push(newStorage);
         this.$localStorage.set(getDate, getStorage);
       }
-
-      let keys = this.$localStorage.keys();
-      keys.map((value) => {
-        this.getSavedLocation = this.$localStorage.get(value);
-      });
-      //this.getSavedLocation = ;
     },
     clearLocalStorage() {
       this.$localStorage.clear();
       this.getSavedLocation = [];
     },
+    loadLocalStorage() {
+      let keys = this.$localStorage.keys();
+      keys.map((value) => {
+        this.getSavedLocation = this.$localStorage.get(value);
+      });
+    },
     setActive(data, index) {
       let getClickIndex = this.activeIndex.indexOf(index);
       if (getClickIndex >= 0) {
-        console.log(this.selectedLatLng);
         this.$delete(this.activeIndex, getClickIndex);
         this.$delete(this.selectedLatLng, getClickIndex + 1);
         this.selectedLatLng.map((value, index) => {
@@ -397,7 +436,7 @@ export default {
       });
       var self = this;
       axios({
-        url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
+        url: "/tmap/routes/pedestrian?version=1&format=json&callback=result",
         method: "post",
         headers: {
           Accept: "application/json",
@@ -527,7 +566,7 @@ export default {
           }
         })
         .catch(function (error) {
-          console.log(error);
+          console.error(error);
         });
     },
     drawLine(arrPoint) {
@@ -553,9 +592,17 @@ export default {
       }
       this.drawInfoArr = [];
     },
-    print() {
-      htmlToImage
-        .toBlob(document.getElementById("map_div"))
+    async print() {
+      let getWidth = this.getWidth();
+      let getHeight = this.getHeight();
+
+      await htmlToImage
+        .toBlob(document.querySelector("#map_div"), {
+          pixelRatio: 1,
+          cacheBust: true,
+          width: getWidth,
+          height: getHeight,
+        })
         .then(function (blob) {
           let getDate = dayjs().format("YYYYMMDDHHmm");
           // let img = new Image();
@@ -567,8 +614,17 @@ export default {
           if (window.saveAs) {
             window.saveAs(blob, getDate + ".png");
           } else {
-            FileSaver.saveAs(blob, getDate + ".png");
+            setTimeout(() => {
+              FileSaver.saveAs(blob, getDate + ".png");
+            }, 1000);
           }
+          // let img = new Image();
+          // img.src = blob;
+          // document.body.appendChild(img);
+          // document.body.appendChild(blob);
+        })
+        .catch((err) => {
+          console.error(err);
         });
     },
     // nearSort(array) {
@@ -634,6 +690,20 @@ export default {
     },
     toggle() {
       this.currentToggle = !this.currentToggle;
+    },
+    getWidth() {
+      let xWidth = null;
+      if (window.screen != null) xWidth = window.screen.availWidth;
+      if (window.innerWidth != null) xWidth = window.innerWidth;
+      if (document.body != null) xWidth = document.body.clientWidth;
+      return xWidth;
+    },
+    getHeight() {
+      let xHeight = null;
+      if (window.screen != null) xHeight = window.screen.availHeight;
+      if (window.innerHeight != null) xHeight = window.innerHeight;
+      if (document.body != null) xHeight = document.body.clientHeight;
+      return xHeight;
     },
   },
   created() {},
