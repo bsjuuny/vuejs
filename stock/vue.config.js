@@ -12,12 +12,6 @@ module.exports = defineConfig({
       key: fs.readFileSync("certs/key.pem"),
       cert: fs.readFileSync("certs/cert.pem"),
     },
-    proxy: {
-      "/tmap": {
-        target: "https://apis.openapi.sk.com",
-        changeOrigin: true,
-      },
-    },
   },
   configureWebpack: {
     resolve: {

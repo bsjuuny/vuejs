@@ -436,7 +436,7 @@ export default {
       });
       var self = this;
       axios({
-        url: "/tmap/routes/pedestrian?version=1&format=json&callback=result",
+        url: "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1&format=json&callback=result",
         method: "post",
         headers: {
           Accept: "application/json",
