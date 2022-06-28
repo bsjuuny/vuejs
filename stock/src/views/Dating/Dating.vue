@@ -122,7 +122,10 @@
         </ul>
         <ul>
           <li v-for="(value, index) in getSavedLocation" v-bind:key="index">
-            {{ value.location.lat }} : {{ value.location.lng }} / {{ index }}
+            {{ value.location.lat }} : {{ value.location.lng }} / {{ value
+            }}<button type="button" style="" @click="setActive(search, index)">
+              선택
+            </button>
           </li>
         </ul>
       </div>
@@ -187,7 +190,8 @@ export default {
           httpsMode: true,
         });
       }
-      this.addMarkerAni(Tmapv2.MarkerOptions.ANIMATE_FLICKER);
+      // this.addMarkerAni(Tmapv2.MarkerOptions.ANIMATE_FLICKER);
+      this.addMarkerAni();
 
       // let getImg = document.querySelectorAll("img");
       // getImg.forEach((item) => {
@@ -204,14 +208,14 @@ export default {
       //   console.log(index);
       // });
     },
-    addMarkerAni(aniType) {
+    addMarkerAni() {
       this.removeMarkers(this.defaultMarkers);
 
       var marker = new Tmapv2.Marker({
         position: this.currentCoords[0],
         draggable: true,
-        animation: aniType,
-        animationLength: 500,
+        // animation: aniType,
+        // animationLength: 500,
         label: '<span style="font-weight: bold; color: red;">현 위치</span>',
         title: "타이틀",
         map: setMap,
@@ -368,6 +372,7 @@ export default {
             location: {
               lat: this.$geolocation.coords.latitude,
               lng: this.$geolocation.coords.longitude,
+              key: getDate,
             },
           },
         ]);
@@ -377,6 +382,7 @@ export default {
           location: {
             lat: this.$geolocation.coords.latitude,
             lng: this.$geolocation.coords.longitude,
+            key: getDate,
           },
         };
         getStorage.push(newStorage);
@@ -743,6 +749,7 @@ button {
   border: 1px solid #ccc;
   border-radius: 5px;
   vertical-align: middle;
+  color: #fff;
 }
 input {
   display: inline-block;
@@ -754,6 +761,10 @@ input {
   font-size: 14px;
   line-height: 1.6;
   vertical-align: middle;
+}
+input::placeholder,
+textarea::placeholder {
+  color: white;
 }
 #map_div {
   display: block;
@@ -772,12 +783,13 @@ ul li {
   flex-flow: row wrap;
   padding: 10px 0 0 0;
   font-size: 14px;
+  color: white;
   #{$a-tags} {
-    color: #333;
+    color: white;
     text-decoration: none;
   }
   #{$a-tags-visited} {
-    color: #888;
+    color: #666;
   }
   sub {
     display: inline-block;
@@ -838,7 +850,7 @@ ul li {
 }
 .contents > div {
   width: 40%;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.8);
   &.customArea {
     position: absolute;
     top: 68px;
