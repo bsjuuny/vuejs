@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="coinList">
     <h1>Coin <sub>(UPBIT API)</sub></h1>
     <ul>
       <li v-for="(value, key, index) in responseData" :key="index">
@@ -95,7 +95,8 @@ export default {
       setTimeout(this.heartbeat, intervalTime);
     },
   },
-  created() {
+  created() {},
+  mounted() {
     const that = this;
 
     let createObject = new Object();
@@ -113,8 +114,7 @@ export default {
     this.$socket.onmessage = function (evt) {
       that.onMessage(evt);
     };
-  },
-  mounted() {
+
     this.responseData = this.$store.getters.getCoinList;
   },
   filters: {
@@ -127,107 +127,4 @@ export default {
 };
 </script>
 
-<style lang="scss">
-h1 {
-  margin: 30px 0 0;
-  font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  sub {
-    font-size: 14px;
-    color: #999;
-  }
-}
-ul {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: space-evenly;
-  align-items: flex-start;
-  margin: 10px 0 0;
-}
-li {
-  display: flex;
-  width: 320px;
-  margin: 10px auto 0;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  box-sizing: border-box;
-  box-shadow: 5px 4px 25px -4px #ddd;
-}
-li > div:last-of-type {
-  margin: 0 0 0 auto;
-}
-.coin {
-  display: inline-block;
-  margin: 0 10px 0 0;
-  font-size: 16px;
-  font-weight: bold;
-}
-.koreanName {
-  display: block;
-  margin: 3px 0 0;
-  font-size: 14px;
-}
-.indices {
-  display: inline-block;
-  margin: 3px 0 0;
-  padding: 1px 3px 0;
-  font-size: 12px;
-  font-weight: bold;
-  border-radius: 5px;
-  line-height: 17px;
-  vertical-align: middle;
-}
-.indices.veryFear {
-  background-color: blue;
-  color: #fff;
-}
-.indices.fear {
-  background-color: skyblue;
-}
-.indices.neutrality {
-  background-color: green;
-  color: #fff;
-}
-.indices.avarice {
-  background-color: orange;
-}
-.indices.veryAvarice {
-  background-color: red;
-  color: #fff;
-}
-.price {
-  display: block;
-  margin: 0 0 0 auto;
-  font-size: 22px;
-  font-weight: bold;
-  text-align: right;
-  color: green;
-}
-.price sup {
-  font-size: 12px;
-}
-.price.rise {
-  color: red;
-}
-.price.fall {
-  color: blue;
-}
-li .start {
-  display: block;
-  margin: 5px 0 0;
-  font-size: 13px;
-  text-align: right;
-}
-li .average {
-  display: block;
-  font-size: 14px;
-  text-align: right;
-}
-@media (min-width: 640px) {
-  li {
-    margin: 20px 5px 0;
-  }
-}
-</style>
+<style lang="scss"></style>

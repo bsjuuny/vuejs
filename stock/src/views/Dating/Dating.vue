@@ -53,81 +53,113 @@
         class="customArea"
         v-bind:class="{ hidden: currentToggle === false }"
       >
-        <div>
-          <button type="button" v-on:click.prevent="setLocalStorage">
-            현재 위치 저장
-          </button>
-          <button type="button" v-on:click.prevent="clearLocalStorage">
-            초기화
-          </button>
-          <button type="button" v-on:click.prevent="loadLocalStorage">
-            전체 불러오기
-          </button>
-        </div>
-        <div>
-          <input
-            type="text"
-            v-model.trim="searchText"
-            name="search"
-            placeholder="검색어를 입력하세요"
-            v-on:keydown.enter="getSearch"
-          />
-          <button type="button" v-on:click="getSearch">주변 검색</button>
-          <button type="button" v-on:click="resetSearch">검색 초기화</button>
+        <div class="tabArea">
           <button
             type="button"
-            v-on:click="getRoute"
-            v-if="selectedLatLng.length > 2"
+            class="active"
+            v-on:click.prevent="activeTab('localSearch', $event)"
           >
-            선택된 경로 검색
+            지역검색
           </button>
           <button
             type="button"
-            v-on:click="print"
-            v-if="this.responseData.result.length > 0"
+            v-on:click.prevent="activeTab('activeRoute', $event)"
           >
-            이미지로
+            활동경로
           </button>
         </div>
+        <div class="localSearch active">
+          <div>
+            <input
+              type="text"
+              v-model.trim="searchText"
+              name="search"
+              placeholder="검색어를 입력하세요"
+              v-on:keydown.enter="getSearch"
+            />
+            <button type="button" v-on:click="getSearch">주변 검색</button>
+            <button type="button" v-on:click="resetSearch">검색 초기화</button>
+            <button
+              type="button"
+              v-on:click="getRoute(selectedLatLng)"
+              v-if="selectedLatLng.length > 2"
+            >
+              선택 경로 탐색
+            </button>
+          </div>
 
-        <p class="routeTotalInformation">{{ routeInformation }}</p>
-        <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
-        <ul v-else>
-          <li
-            v-for="(search, index) in searchResults"
-            v-bind:key="index"
-            :class="{ active: activeIndex.includes(index) }"
-          >
-            <div>
-              <a v-bind:href="search.place_url" target="_blank">
-                {{ index + 1 }}
-                {{ search.place_name }}
-                <span>
-                  <sub>
-                    {{ search.category_name_detail }}
-                  </sub>
-                </span>
-              </a>
-              <address>{{ search.road_address_name }}</address>
-            </div>
-            <!-- v-bind:data-x="search.x"
+          <p class="routeTotalInformation">{{ routeInformation }}</p>
+          <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
+          <ul v-else>
+            <li
+              v-for="(search, index) in searchResults"
+              v-bind:key="index"
+              :class="{ active: activeIndex.includes(index) }"
+            >
+              <div>
+                <a v-bind:href="search.place_url" target="_blank">
+                  {{ index + 1 }}
+                  {{ search.place_name }}
+                  <span>
+                    <sub>
+                      {{ search.category_name_detail }}
+                    </sub>
+                  </span>
+                </a>
+                <address>{{ search.road_address_name }}</address>
+              </div>
+              <!-- v-bind:data-x="search.x"
             v-bind:data-y="search.y" -->
-            <button type="button" style="" @click="setActive(search, index)">
-              선택
+              <button type="button" style="" @click="setActive(search, index)">
+                선택
+              </button>
+            </li>
+            <li v-if="this.responseData.meta.is_end === false">
+              <button type="button" v-on:click="getAddSearch">더보기</button>
+            </li>
+          </ul>
+        </div>
+        <div class="activeRoute">
+          <div>
+            <button type="button" v-on:click.prevent="setLocalStorage">
+              현재 위치 저장
             </button>
-          </li>
-          <li v-if="this.responseData.meta.is_end === false">
-            <button type="button" v-on:click="getAddSearch">더보기</button>
-          </li>
-        </ul>
-        <ul>
-          <li v-for="(value, index) in getSavedLocation" v-bind:key="index">
-            {{ value.location.lat }} : {{ value.location.lng }} / {{ value
-            }}<button type="button" style="" @click="setActive(search, index)">
-              선택
+            <button type="button" v-on:click.prevent="clearLocalStorage">
+              초기화
             </button>
-          </li>
-        </ul>
+            <button type="button" v-on:click.prevent="loadLocalStorage">
+              전체 불러오기
+            </button>
+            <button
+              type="button"
+              v-on:click="getRoute(selectedLocalLatLng)"
+              v-if="selectedLocalLatLng.length > 2"
+            >
+              선택 경로 탐색
+            </button>
+          </div>
+          <p class="routeTotalInformation">{{ routeInformation }}</p>
+          <ul>
+            <li
+              v-for="(value, index) in getSavedLocation"
+              v-bind:key="index"
+              :class="{ active: activeLocalIndex.includes(index) }"
+            >
+              <div>
+                <a href=""
+                  >{{ value.location.lat }} : {{ value.location.lng }}</a
+                >
+              </div>
+              <button
+                type="button"
+                style=""
+                @click="setLocalActive(value, index)"
+              >
+                선택
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
       <button type="button" class="showHide" v-on:click="toggle">
         접기/펴기
@@ -139,6 +171,7 @@
 <script>
 import axios from "axios";
 import dayjs from "dayjs";
+// eslint-disable-next-line no-unused-vars
 import * as htmlToImage from "html-to-image";
 // eslint-disable-next-line no-unused-vars
 import { saveAs } from "file-saver";
@@ -157,12 +190,14 @@ export default {
       searchResults: [],
       getSavedLocation: [],
       activeIndex: [],
+      activeLocalIndex: [],
       responseData: {
         result: [],
         isLoading: false,
         meta: [],
       },
       selectedLatLng: [],
+      selectedLocalLatLng: [],
       routeInformation: "",
       drawInfoArr: [],
       resultdrawArr: [],
@@ -211,7 +246,7 @@ export default {
     addMarkerAni() {
       this.removeMarkers(this.defaultMarkers);
 
-      var marker = new Tmapv2.Marker({
+      let marker = new Tmapv2.Marker({
         position: this.currentCoords[0],
         draggable: true,
         // animation: aniType,
@@ -372,7 +407,6 @@ export default {
             location: {
               lat: this.$geolocation.coords.latitude,
               lng: this.$geolocation.coords.longitude,
-              key: getDate,
             },
           },
         ]);
@@ -382,7 +416,6 @@ export default {
           location: {
             lat: this.$geolocation.coords.latitude,
             lng: this.$geolocation.coords.longitude,
-            key: getDate,
           },
         };
         getStorage.push(newStorage);
@@ -413,29 +446,33 @@ export default {
           this.selectedLatLng.push({
             lat: data.y,
             lng: data.x,
-            title: data.place_name,
+            title: data.place_name
+              ? data.place_name
+              : "경로 " + (this.selectedLatLng.length + 1),
             index: this.selectedLatLng.length + 1,
-            url: data.place_url,
+            url: data.place_url ? data.place_url : "",
           });
         } else {
           alert("최대 4곳 까지만 가능 합니다.");
         }
       }
     },
-    getRoute() {
+    getRoute(array) {
       let waypoints = "";
       //기존 그려진 라인 & 마커가 있다면 초기화
       this.removeLine();
+      this.routeInformation = "";
+      let getArray = array;
 
       // this.nearSort(this.selectedLatLng);
 
-      this.selectedLatLng.forEach((value, index) => {
-        if (index === 0 || index === this.selectedLatLng.length - 1) {
+      getArray.forEach((value, index) => {
+        if (index === 0 || index === getArray.length - 1) {
           return false;
         } else {
           waypoints += value.lng + "," + value.lat;
 
-          if (index !== this.selectedLatLng.length - 2) {
+          if (index !== getArray.length - 2) {
             waypoints += "_";
           }
         }
@@ -450,15 +487,16 @@ export default {
           appKey: process.env.VUE_APP_TMAP_KEY,
         },
         data: JSON.stringify({
-          startX: this.selectedLatLng[0].lng,
-          startY: this.selectedLatLng[0].lat,
+          startX: getArray[0].lng,
+          startY: getArray[0].lat,
           passList: waypoints,
-          endX: this.selectedLatLng[this.selectedLatLng.length - 1].lng,
-          endY: this.selectedLatLng[this.selectedLatLng.length - 1].lat,
+          endX: getArray[getArray.length - 1].lng,
+          endY: getArray[getArray.length - 1].lat,
           reqCoordType: "WGS84GEO",
           resCoordType: "EPSG3857",
           startName: "Start",
           endName: "End",
+          searchOption: 10,
         }),
       })
         .then(function (response) {
@@ -515,7 +553,7 @@ export default {
                     "https://tmapapi.sktelecom.com/upload/tmap/marker/pin_r_m_s.png";
                   pType = "S";
                   size = new Tmapv2.Size(24, 38);
-                  description = self.selectedLatLng[0].place_name;
+                  description = getArray[0].place_name;
                 }
                 // else if (properties.pointType == "EP") {
                 //   //도착지 마커
@@ -567,8 +605,8 @@ export default {
                 self.routeMaker.push(marker_p);
               }
             } //for문 [E]
+            self.addSearchMaker(getArray, "route");
             self.drawLine(self.drawInfoArr);
-            self.addSearchMaker(self.selectedLatLng, "route");
           }
         })
         .catch(function (error) {
@@ -598,41 +636,41 @@ export default {
       }
       this.drawInfoArr = [];
     },
-    async print() {
-      let getWidth = this.getWidth();
-      let getHeight = this.getHeight();
+    // async print() {
+    //   let getWidth = this.getWidth();
+    //   let getHeight = this.getHeight();
 
-      await htmlToImage
-        .toBlob(document.querySelector("#map_div"), {
-          pixelRatio: 1,
-          cacheBust: true,
-          width: getWidth,
-          height: getHeight,
-        })
-        .then(function (blob) {
-          let getDate = dayjs().format("YYYYMMDDHHmm");
-          // let img = new Image();
-          // img.src = dataUrl;
-          // document.body.appendChild(img);
-          // download(dataUrl, getDate + ".png");
-          // console.log(dataUrl);
-          // this.output = dataUrl;
-          if (window.saveAs) {
-            window.saveAs(blob, getDate + ".png");
-          } else {
-            setTimeout(() => {
-              FileSaver.saveAs(blob, getDate + ".png");
-            }, 1000);
-          }
-          // let img = new Image();
-          // img.src = blob;
-          // document.body.appendChild(img);
-          // document.body.appendChild(blob);
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-    },
+    //   await htmlToImage
+    //     .toBlob(document.querySelector("#map_div"), {
+    //       pixelRatio: 1,
+    //       cacheBust: true,
+    //       width: getWidth,
+    //       height: getHeight,
+    //     })
+    //     .then(function (blob) {
+    //       let getDate = dayjs().format("YYYYMMDDHHmm");
+    //       // let img = new Image();
+    //       // img.src = dataUrl;
+    //       // document.body.appendChild(img);
+    //       // download(dataUrl, getDate + ".png");
+    //       // console.log(dataUrl);
+    //       // this.output = dataUrl;
+    //       if (window.saveAs) {
+    //         window.saveAs(blob, getDate + ".png");
+    //       } else {
+    //         setTimeout(() => {
+    //           FileSaver.saveAs(blob, getDate + ".png");
+    //         }, 1000);
+    //       }
+    //       // let img = new Image();
+    //       // img.src = blob;
+    //       // document.body.appendChild(img);
+    //       // document.body.appendChild(blob);
+    //     })
+    //     .catch((err) => {
+    //       console.error(err);
+    //     });
+    // },
     // nearSort(array) {
     //   let currentLat = this.$geolocation.coords.latitude;
     //   let currentLng = this.$geolocation.coords.longitude;
@@ -711,6 +749,46 @@ export default {
       if (document.body != null) xHeight = document.body.clientHeight;
       return xHeight;
     },
+    activeTab(item, some) {
+      if (some) {
+        let tabButtons = document.querySelectorAll(".tabArea > button");
+        for (let i = 0; i < tabButtons.length; i++) {
+          tabButtons[i].classList.remove("active");
+        }
+        some.currentTarget.classList.add("active");
+      }
+      this.resetSearch();
+      let division = document.querySelectorAll(".tabArea ~ div");
+      for (let i = 0; i < division.length; i++) {
+        division[i].classList.remove("active");
+      }
+      document.querySelector("." + item).classList.add("active");
+    },
+    setLocalActive(data, index) {
+      let getClickIndex = this.activeLocalIndex.indexOf(index);
+      if (getClickIndex >= 0) {
+        this.$delete(this.activeLocalIndex, getClickIndex);
+        this.$delete(this.selectedLocalLatLng, getClickIndex + 1);
+        this.selectedLocalLatLng.map((value, index) => {
+          value.index = index + 1;
+        });
+      } else {
+        if (this.selectedLocalLatLng.length <= 4) {
+          this.activeLocalIndex.push(index);
+          this.selectedLocalLatLng.push({
+            lat: data.location.lat,
+            lng: data.location.lng,
+            title: data.place_name ? data.place_name : "저장경로",
+            index: this.selectedLocalLatLng.length + 1,
+            url: data.place_url ? data.place_url : "",
+          });
+        } else {
+          alert("최대 4곳 까지만 가능 합니다.");
+        }
+      }
+      console.log(this.selectedLocalLatLng);
+      this.addSearchMaker(this.selectedLocalLatLng, "pin");
+    },
   },
   created() {},
   mounted() {
@@ -725,6 +803,8 @@ export default {
         url: "",
       });
     });
+    let agent = navigator.userAgent.toLowerCase();
+    console.error(agent);
   },
   updated() {},
 };
@@ -739,6 +819,23 @@ $breakpoint-tablet: 768px;
 $breakpoint-pc: 1024px;
 $retina: "(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)";
 
+:root {
+  --primary-light: #8abdff;
+  --primary: #6d5dfc;
+  --primary-dark: #5b0eeb;
+
+  --white: #ffffff;
+  --greyLight-1: #e4ebf5;
+  --greyLight-2: #c8d0e7;
+  --greyLight-3: #bec8e4;
+  --greyDark: #9baacf;
+}
+
+$shadow: 0.3rem 0.3rem 0.6rem var(--greyLight-2),
+  -0.2rem -0.2rem 0.5rem var(--white);
+$inner-shadow: inset 0.2rem 0.2rem 0.5rem var(--greyLight-2),
+  inset -0.2rem -0.2rem 0.5rem var(--white);
+
 body {
   padding: 0;
 }
@@ -750,6 +847,9 @@ button {
   border-radius: 5px;
   vertical-align: middle;
   color: #fff;
+  &:first-of-type {
+    margin-left: 0;
+  }
 }
 input {
   display: inline-block;
@@ -761,6 +861,10 @@ input {
   font-size: 14px;
   line-height: 1.6;
   vertical-align: middle;
+  color: white;
+  &:first-of-type {
+    margin: 0 5px 10px 0;
+  }
 }
 input::placeholder,
 textarea::placeholder {
@@ -781,15 +885,14 @@ textarea::placeholder {
 ul li {
   display: flex;
   flex-flow: row wrap;
+  align-items: center;
   padding: 10px 0 0 0;
   font-size: 14px;
   color: white;
-  #{$a-tags} {
+  #{$a-tags},
+  #{$a-tags-visited} {
     color: white;
     text-decoration: none;
-  }
-  #{$a-tags-visited} {
-    color: #666;
   }
   sub {
     display: inline-block;
@@ -804,7 +907,9 @@ ul li {
     font-size: 10px;
     color: #7e8795;
   }
-  button {
+  button,
+  button:first-of-type {
+    margin-left: 10px;
     vertical-align: 2px;
   }
   &.active {
@@ -819,7 +924,8 @@ ul li {
   }
 }
 .routeTotalInformation {
-  margin: 10px 0;
+  margin: 20px 0 10px;
+  color: white;
 }
 .contents {
   position: relative;
@@ -847,6 +953,23 @@ ul li {
   .customArea + .showHide {
     right: 20px;
   }
+  .tabArea {
+    display: inline-block;
+    margin: 0 0 10px;
+    padding: 10px 20px;
+    border-radius: 1rem;
+    box-shadow: $shadow;
+    button {
+      padding: 5px 12px;
+      border: 0;
+      transition: all 0.5s ease;
+    }
+    button.active {
+      box-shadow: $inner-shadow;
+      transform: translateX(0);
+      transition: transform 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
+  }
 }
 .contents > div {
   width: 40%;
@@ -855,7 +978,7 @@ ul li {
     position: absolute;
     top: 68px;
     left: 0;
-    width: 100vw;
+    width: calc(100vw - 42px);
     height: calc(
       calc(calc(90vh - env(safe-area-inset-top)) - env(safe-area-inset-bottom)) -
         98px
@@ -866,6 +989,20 @@ ul li {
     &.hidden {
       left: -100vw;
     }
+    .localSearch {
+      display: none;
+      margin: 10px 0 0;
+      &.active {
+        display: block;
+      }
+    }
+    .activeRoute {
+      display: none;
+      margin: 10px 0 0;
+      &.active {
+        display: block;
+      }
+    }
   }
 }
 .contents > div:first-of-type {
@@ -875,6 +1012,9 @@ ul li {
   position: absolute;
   top: 0;
   left: 0;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
   width: 100%;
   height: 68px;
   padding: 0 20px;

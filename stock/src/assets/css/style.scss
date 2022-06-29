@@ -57,3 +57,142 @@ ol, ul, li {
 button, input, select, textarea {
   background-color: transparent; outline: none; border: 0;
 }
+
+nav {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  width: calc(100% - 20px);
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  margin: 0 10px;
+}
+
+.navCoin {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  background: url("data:image/svg+xml,%3Csvg version='1.1' id='Capa_1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' width='394.4px' height='394.401px' viewBox='0 0 394.4 394.401' style='enable-background:new 0 0 394.4 394.401;' xml:space='preserve'%3E%3Cg%3E%3Cpath d='M197.2,0C88.292,0,0,88.292,0,197.201C0,306.109,88.292,394.4,197.2,394.4c108.909,0,197.2-88.291,197.2-197.199 C394.4,88.292,306.109,0,197.2,0z M197.2,362.005c-91.018,0-164.805-73.787-164.805-164.805 c0-91.019,73.787-164.805,164.805-164.805c91.019,0,164.806,73.787,164.806,164.805C362.006,288.218,288.219,362.005,197.2,362.005 z M271.633,192.073c6.316-8.915,10.084-20.074,10.084-32.198c0-29.172-21.76-52.822-48.592-52.822c-2.148,0-4.76,0-7.746,0V66.205 c0-2.326-1.904-4.223-4.223-4.223h-14.096c-2.326,0-4.223,1.904-4.223,4.223v40.848h-22.536V66.205 c0-2.326-1.904-4.223-4.223-4.223h-14.083c-2.326,0-4.223,1.904-4.223,4.223v40.848h-46.485c-2.333,0-4.223,1.89-4.223,4.223 v14.226c0,2.176,1.625,4.06,3.794,4.257c15.872,1.455,24.378,12.104,24.378,25.187v87.333c0,11.771-6.073,21.113-19.346,22.392 c-1.884,0.184-3.448,1.523-3.801,3.387l-2.693,14.361c-0.483,2.563,1.489,4.938,4.101,4.938h44.261v40.848 c0,2.325,1.904,4.223,4.223,4.223h14.083c2.325,0,4.223-1.904,4.223-4.223v-40.848h22.536v40.848c0,2.325,1.904,4.223,4.223,4.223 h14.082c2.326,0,4.223-1.904,4.223-4.223v-40.848c7.984,0,14.613,0,19.014,0c26.84,0,48.592-23.331,48.592-52.115 C292.984,217.274,284.52,201.444,271.633,192.073z M180.295,140.855c0,0,21.671,0,34.509,0c12.84,0,23.242,10.404,23.242,23.243 c0,12.838-10.402,23.242-23.242,23.242c-12.838,0-34.509,0-34.509,0V140.855z M226.072,254.953c-12.838,0-45.777,0-45.777,0v-46.484c0,0,32.939,0,45.777,0c12.84,0,23.242,10.403,23.242,23.242C249.314,244.548,238.912,254.953,226.072,254.953z'/%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3Cg%3E%3C/g%3E%3C/svg%3E") no-repeat 0 0;
+  background-size: 50px 50px;
+  text-indent: -9999em;
+  border: 0;
+}
+
+.navRoute {
+  display: inline-block;
+  width: 50px;
+  height: 50px;
+  background: url("data:image/svg+xml,%3Csvg%0Axmlns='http://www.w3.org/2000/svg'%0Axmlns:xlink='http://www.w3.org/1999/xlink'%0Aversion='1.1' height='315' width='342' %3E%3Cdefs%3E%3Cstyle type='text/css'%3E%3C!%5BCDATA%5B .outline %7B stroke:none; stroke-width:0 %7D %5D%5D%3E%3C/style%3E%3Cg id='heart'%3E%3Cpath d='M0 200 v-200 h200 a100,100 90 0,1 0,200 a100,100 90 0,1 -200,0 z' /%3E%3C/g%3E%3C/defs%3E%3Cdesc%3E a nearly perfect heart made of two arcs and a right angle %3C/desc%3E%3Cuse xlink:href='%23heart' class='outline ' fill='red' transform='rotate(225,150,121)' /%3E%3C/svg%3E") no-repeat 0 0;
+  background-size: 50px 50px;
+  text-indent: -9999em;
+  border: 0;
+}
+
+.coinList {
+  h1 {
+    margin: 30px 0 0;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    sub {
+      font-size: 14px;
+      color: #999;
+    }
+  }
+  ul {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    margin: 10px 0 0;
+  }
+  li {
+    display: flex;
+    width: 320px;
+    margin: 10px auto 0;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-sizing: border-box;
+    box-shadow: 5px 4px 25px -4px #ddd;
+    &  > div:last-of-type {
+      margin: 0 0 0 auto;
+    }
+    span {
+      color: black;
+    }
+  }
+  .coin {
+    display: inline-block;
+    margin: 0 10px 0 0;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .koreanName {
+    display: block;
+    margin: 3px 0 0;
+    font-size: 14px;
+  }
+  .indices {
+    display: inline-block;
+    margin: 3px 0 0;
+    padding: 1px 3px 0;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    line-height: 17px;
+    vertical-align: middle;
+  }
+  .indices.veryFear {
+    background-color: blue;
+    color: #fff;
+  }
+  .indices.fear {
+    background-color: skyblue;
+  }
+  .indices.neutrality {
+    background-color: green;
+    color: #fff;
+  }
+  .indices.avarice {
+    background-color: orange;
+  }
+  .indices.veryAvarice {
+    background-color: red;
+    color: #fff;
+  }
+  .price {
+    display: block;
+    margin: 0 0 0 auto;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: right;
+    color: green;
+  }
+  .price sup {
+    font-size: 12px;
+  }
+  .price.rise {
+    color: red;
+  }
+  .price.fall {
+    color: blue;
+  }
+  li .start {
+    display: block;
+    margin: 5px 0 0;
+    font-size: 13px;
+    text-align: right;
+  }
+  li .average {
+    display: block;
+    font-size: 14px;
+    text-align: right;
+  }
+  @media (min-width: 640px) {
+    li {
+      margin: 20px 5px 0;
+    }
+  }
+}

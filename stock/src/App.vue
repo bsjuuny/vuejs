@@ -1,17 +1,19 @@
 <template>
   <div>
     <template>
-      <!-- <router-link to="/login">login</router-link> -------- <router-link to="/signup">signup</router-link> <br />
-			<a href="javascript:void(0)">로그아웃</a> -->
-    </template>
-    <template>
       <router-view></router-view>
+      <Navigation />
     </template>
   </div>
 </template>
 
 <script>
+import Navigation from "./components/common/Navigation";
+
 export default {
+  components: {
+    Navigation,
+  },
   computed: {
     isUserLogin() {
       return this.$store.getters.isLogin;
