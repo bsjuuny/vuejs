@@ -59,7 +59,7 @@ button, input, select, textarea {
 }
 
 nav {
-  position: absolute;
+  position: sticky;
   bottom: 20px;
   left: 0;
   width: calc(100% - 20px);
