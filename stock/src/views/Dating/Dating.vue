@@ -429,7 +429,10 @@ export default {
     loadLocalStorage() {
       let keys = this.$localStorage.keys();
       keys.map((value) => {
-        this.getSavedLocation = this.$localStorage.get(value);
+        let setValue = this.$localStorage.get(value);
+        setValue.map((val) => {
+          this.getSavedLocation.push(val);
+        });
       });
     },
     setActive(data, index) {
