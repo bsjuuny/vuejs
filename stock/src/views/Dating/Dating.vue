@@ -77,6 +77,12 @@
               placeholder="검색어를 입력하세요"
               v-on:keydown.enter="getSearch"
             />
+            <input
+              type="checkbox"
+              id="currentLocation"
+              v-model.trim="setCurrentLocation"
+              @change="includeLocation()"
+            /><label for="currentLocation">현위치 기준</label>
             <button type="button" v-on:click="getSearch">주변 검색</button>
             <button type="button" v-on:click="resetSearch">검색 초기화</button>
             <button
@@ -88,8 +94,15 @@
             </button>
           </div>
 
-          <p class="routeTotalInformation">{{ routeInformation }}</p>
-          <p v-if="responseData.meta.total_count <= 0">검색결과 없음</p>
+          <p
+            class="routeTotalInformation"
+            v-if="responseData.meta.total_count > 0"
+          >
+            {{ routeInformation }}
+          </p>
+          <p class="noData" v-if="responseData.meta.total_count <= 0">
+            검색결과 없음
+          </p>
           <ul v-else>
             <li
               v-for="(search, index) in searchResults"
@@ -114,7 +127,7 @@
                 선택
               </button>
             </li>
-            <li v-if="this.responseData.meta.is_end === false">
+            <li v-if="responseData.meta.is_end === false">
               <button type="button" v-on:click="getAddSearch">더보기</button>
             </li>
           </ul>
@@ -207,6 +220,7 @@ export default {
       searchPage: 1,
       searchPageSize: 15,
       searchRadius: 1000,
+      setCurrentLocation: true,
     };
   },
   methods: {
@@ -275,16 +289,26 @@ export default {
 
       try {
         if (search !== "") {
+          console.log(self.setCurrentLocation);
+          let setRequest = {
+            query: search,
+            radius: search_radius,
+            size: search_size,
+            page: search_page,
+          };
+
+          if (self.setCurrentLocation) {
+            setRequest = {
+              ...setRequest,
+              x: this.$geolocation.coords.longitude,
+              y: this.$geolocation.coords.latitude,
+            };
+          }
+          console.log(setRequest);
+
           await axios
             .get("https://dapi.kakao.com/v2/local/search/keyword.json", {
-              params: {
-                query: search,
-                radius: search_radius,
-                size: search_size,
-                page: search_page,
-                x: this.$geolocation.coords.longitude,
-                y: this.$geolocation.coords.latitude,
-              },
+              params: setRequest,
               headers: {
                 Authorization: KAKAO_KEY,
               },
@@ -292,16 +316,8 @@ export default {
             .then(function (response) {
               let getCoords = [];
               self.removeLine();
+              self.removeMarkers(self.searchMarkers);
               if (response.data.meta.total_count > 0) {
-                // self.selectedLatLng = [
-                //   {
-                //     lat: self.$geolocation.coords.latitude,
-                //     lng: self.$geolocation.coords.longitude,
-                //     title: "현 위치",
-                //     index: 1,
-                //     url: "",
-                //   },
-                // ];
                 response.data.documents.map((value, index) => {
                   let getData = value["category_name"].split(">");
                   value["category_name_detail"] =
@@ -316,14 +332,12 @@ export default {
                   self.searchResults.push(value);
                 });
                 self.addSearchMaker(getCoords, "pin");
-                self.responseData.meta = response.data.meta;
-                self.responseData.result = response.data.documents;
-                self.responseData.isLoading = false;
-
-                // let getResult = response.data.documents;
               } else {
-                self.removeMarkers(self.searchMarkers);
+                self.resetSearch();
               }
+              self.responseData.meta = response.data.meta;
+              self.responseData.result = response.data.documents;
+              self.responseData.isLoading = false;
             })
             .catch(function (error) {
               console.error(error);
@@ -390,6 +404,18 @@ export default {
       this.searchResults = [];
       this.activeIndex = [];
       this.searchPage = 1;
+      this.selectedLatLng = [];
+      if (this.setCurrentLocation) {
+        this.selectedLatLng = [
+          {
+            lat: this.$geolocation.coords.latitude,
+            lng: this.$geolocation.coords.longitude,
+            title: "현 위치",
+            index: 1,
+            url: "",
+          },
+        ];
+      }
       this.responseData = {
         result: [],
         isLoading: false,
@@ -437,6 +463,7 @@ export default {
     },
     setActive(data, index) {
       let getClickIndex = this.activeIndex.indexOf(index);
+      console.log(getClickIndex);
       if (getClickIndex >= 0) {
         this.$delete(this.activeIndex, getClickIndex);
         this.$delete(this.selectedLatLng, getClickIndex + 1);
@@ -792,22 +819,41 @@ export default {
       console.log(this.selectedLocalLatLng);
       this.addSearchMaker(this.selectedLocalLatLng, "pin");
     },
+    includeLocation() {
+      if (this.setCurrentLocation) {
+        this.selectedLatLng.unshift({
+          lat: this.$geolocation.coords.latitude,
+          lng: this.$geolocation.coords.longitude,
+          title: "현 위치",
+          index: 1,
+          url: "",
+        });
+        this.selectedLatLng.map((value, index) => {
+          value.index = index + 1;
+        });
+      } else {
+        this.$delete(this.selectedLatLng, 0);
+      }
+      console.log(this.selectedLatLng);
+    },
   },
   created() {},
   mounted() {
     this.$geolocation.getCurrentPosition().then(() => {
       this.getMyInfo();
 
-      this.selectedLatLng.push({
-        lat: this.$geolocation.coords.latitude,
-        lng: this.$geolocation.coords.longitude,
-        title: "현 위치",
-        index: 1,
-        url: "",
-      });
+      if (this.setCurrentLocation) {
+        this.selectedLatLng.push({
+          lat: this.$geolocation.coords.latitude,
+          lng: this.$geolocation.coords.longitude,
+          title: "현 위치",
+          index: 1,
+          url: "",
+        });
+      }
     });
-    let agent = navigator.userAgent.toLowerCase();
-    console.error(agent);
+    // let agent = navigator.userAgent.toLowerCase();
+    // console.error(agent);
   },
   updated() {},
 };
@@ -854,7 +900,7 @@ button {
     margin-left: 0;
   }
 }
-input {
+input[type="text"] {
   display: inline-block;
   width: calc(100% - 40px);
   margin: 10px 5px;
@@ -871,6 +917,11 @@ input {
 }
 input::placeholder,
 textarea::placeholder {
+  color: white;
+}
+label {
+  display: inline-block;
+  margin: 0 20px 0 0;
   color: white;
 }
 #map_div {
@@ -929,6 +980,11 @@ ul li {
 .routeTotalInformation {
   margin: 20px 0 10px;
   color: white;
+}
+.noData {
+  text-align: center;
+  color: white;
+  line-height: 50vh;
 }
 .contents {
   position: relative;
@@ -992,13 +1048,7 @@ ul li {
     &.hidden {
       left: -100vw;
     }
-    .localSearch {
-      display: none;
-      margin: 10px 0 0;
-      &.active {
-        display: block;
-      }
-    }
+    .localSearch,
     .activeRoute {
       display: none;
       margin: 10px 0 0;
