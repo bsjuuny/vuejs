@@ -173,10 +173,10 @@ nav {
   .price sup {
     font-size: 12px;
   }
-  .price.rise {
+  .price.rise, .price.rise span {
     color: red;
   }
-  .price.fall {
+  .price.fall, .price.fall span {
     color: blue;
   }
   li .start {

@@ -128,7 +128,13 @@
               </button>
             </li>
             <li v-if="responseData.meta.is_end === false">
-              <button type="button" v-on:click="getAddSearch">더보기</button>
+              <button
+                type="button"
+                class="buttonMore"
+                v-on:click="getAddSearch"
+              >
+                더보기
+              </button>
             </li>
           </ul>
         </div>
@@ -173,6 +179,19 @@
             </li>
           </ul>
         </div>
+        <p class="attention">
+          서비스 가능 지역<br />
+          ㅇ 서울특별시, 수도권 시지역, 6대광역시, 제주도<br />
+          ㅇ 강원도 – 강릉시, 동해시, 삼첫기, 속초시, 원주시, 춘천시, 태백시 및
+          일부 군지역<br />
+          ㅇ 경상남도 - 창원시, 거제시, 김해시, 양산시, 진주시, 통영시<br />
+          ㅇ 경상북도 - 경주시, 경산시, 구미시, 안동시, 포항시, 영덕군 일부<br />
+          ㅇ 전라남도 - 여수시, 목포시, 순천시<br />
+          ㅇ 전락북도 – 전주시, 군산시, 남원시, 익산시, 완주군<br />
+          ㅇ 충청남도 - 천안시, 공주시, 논산시, 아산시<br />
+          ㅇ 충청북도 - 청주시, 충주시, 단양군 일부<br />
+          ※ 서비스 제공 지역은 지속적으로 확대 추진하고 있습니다.
+        </p>
       </div>
       <button type="button" class="showHide" v-on:click="toggle">
         접기/펴기
@@ -966,6 +985,9 @@ ul li {
     margin-left: 10px;
     vertical-align: 2px;
   }
+  .buttonMore {
+    width: 150px;
+  }
   &.active {
     font-size: 14px;
     color: red;
@@ -1084,5 +1106,11 @@ ul li {
     font-size: 14px;
     line-height: 16px;
   }
+}
+.attention {
+  margin: 20px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #fff;
 }
 </style>

@@ -32,6 +32,10 @@ const routes = [
     path: "/dating",
     component: () => import("@/views/Dating/Dating"),
   },
+  {
+    path: "/mission",
+    component: () => import("@/views/Mission/Mission"),
+  },
 ];
 
 const router = new VueRouter({
